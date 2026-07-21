@@ -17,7 +17,8 @@
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:'Segoe UI','Sarabun',sans-serif;background:var(--bg);color:var(--text);transition:.2s;}
-  .app{max-width:1000px;margin:0 auto;padding:16px;}
+  .app{max-width:1600px;margin:0 auto;padding:20px 36px 40px;}
+  @media(max-width:900px){.app{padding:14px;}}
   header{background:linear-gradient(135deg,var(--pink),var(--mint));border-radius:18px;padding:20px;color:#fff;
     display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);margin-bottom:16px;}
   header h1{margin:0;font-size:20px;} header p{margin:2px 0 0;font-size:13px;opacity:.9;}
@@ -96,7 +97,9 @@
   @media print{
     body > *:not(#printArea){ display:none !important; }
     #printArea{ display:block !important; }
+    html, body{ background:#ffffff !important; }
     * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+    @page{ margin:8mm; }
   }
 
   /* --- Public report view (สำหรับสแกน QR) --- */
@@ -824,7 +827,7 @@ async function generateQrDataUrl(evidenceId, colorDark){
   document.body.appendChild(temp);
   new QRCode(temp, { text: link, width: 260, height: 260, colorDark: colorDark||'#1a2744', colorLight: '#ffffff' });
   // QRCode.js render แบบ async ภายใน ให้รอสักครู่ก่อนอ่านผลลัพธ์
-  await new Promise(resolve=>setTimeout(resolve, 200));
+  await new Promise(resolve=>setTimeout(resolve, 80));
   const imgEl = temp.querySelector('img');
   const canvasEl = temp.querySelector('canvas');
   let dataUrl = null;
@@ -845,6 +848,7 @@ function formatSeizePlace(ev){
 }
 
 async function printLabel(c, suspects, ev){
+  showToast('🖨️ กำลังเตรียมป้ายสำหรับพิมพ์...', 'info', 8000);
   const qrDataUrl = await generateQrDataUrl(ev.EvidenceID, '#1a2744');
   const suspectNames = (suspects && suspects.length)
     ? suspects.map(s=>s.Name).filter(Boolean).join(', ')
@@ -916,10 +920,11 @@ async function doPrint(html){
     return new Promise(resolve=>{
       img.addEventListener('load', resolve, { once:true });
       img.addEventListener('error', resolve, { once:true });
-      setTimeout(resolve, 5000); // กันค้างถ้ารูปโหลดไม่สำเร็จเลย
+      setTimeout(resolve, 2500); // กันค้างถ้ารูปโหลดไม่สำเร็จเลย
     });
   }));
-  requestAnimationFrame(()=> setTimeout(()=>window.print(), 60));
+  showToast('✅ พร้อมพิมพ์แล้ว', 'success', 1200);
+  requestAnimationFrame(()=> setTimeout(()=>window.print(), 50));
 }
 
 /* ---------------- PUBLIC REPORT VIEW (หน้าที่เด้งขึ้นเมื่อสแกน QR) ---------------- */
