@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบริหารของกลางและรายงานคดี - สภ.ระเบาะไผ่</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --pink:#ff6b9d; --pink-light:#ffe3ee; --mint:#63e6be; --mint-light:#e3fff6;
+    --bg:#fff7fb; --card:#ffffff; --text:#2d2140; --sub:#7a6f8c; --border:#ffd6e8;
+    --shadow: 0 4px 20px rgba(255,107,157,0.15);
+  }
+  [data-theme="dark"]{
+    --bg:#1a1626; --card:#241d33; --text:#f2eaf7; --sub:#b3a5c4; --border:#3a2f4d;
+    --pink-light:#3a2233; --mint-light:#1a3a33; --shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Segoe UI','Sarabun',sans-serif;background:var(--bg);color:var(--text);transition:.2s;}
+  .app{max-width:1000px;margin:0 auto;padding:16px;}
+  header{background:linear-gradient(135deg,var(--pink),var(--mint));border-radius:18px;padding:20px;color:#fff;
+    display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow);margin-bottom:16px;}
+  header h1{margin:0;font-size:20px;} header p{margin:2px 0 0;font-size:13px;opacity:.9;}
+  .theme-btn{background:rgba(255,255,255,.25);border:none;color:#fff;padding:8px 14px;border-radius:20px;cursor:pointer;font-size:14px;}
+  nav{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  nav button{flex:1;min-width:120px;padding:12px;border:2px solid var(--border);background:var(--card);color:var(--text);
+    border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;transition:.15s;}
+  nav button.active{background:var(--pink);color:#fff;border-color:var(--pink);}
+  .card{background:var(--card);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px;border:1px solid var(--border);}
+  .card h2{margin-top:0;font-size:17px;color:var(--pink);}
+  label{display:block;font-size:13px;color:var(--sub);margin:10px 0 4px;font-weight:600;}
+  input,select,textarea{width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;}
+  textarea{min-height:70px;font-family:inherit;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  @media(max-width:600px){.row,.row3{grid-template-columns:1fr;}}
+  .btn{background:var(--pink);color:#fff;border:none;padding:11px 18px;border-radius:10px;cursor:pointer;font-size:14px;font-weight:600;margin-top:8px;}
+  .btn.mint{background:var(--mint);}
+  .btn.outline{background:transparent;border:2px solid var(--pink);color:var(--pink);}
+  .btn.small{padding:6px 12px;font-size:12px;}
+  .sub-block{background:var(--pink-light);border-radius:12px;padding:14px;margin:12px 0;position:relative;}
+  .sub-block.mint{background:var(--mint-light);}
+  .remove-x{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--pink);font-size:18px;cursor:pointer;font-weight:bold;}
+  .pill{display:inline-block;background:var(--mint-light);color:var(--text);padding:3px 10px;border-radius:20px;font-size:12px;margin:2px;}
+  .result-item{border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;}
+  .thumbs{display:flex;gap:8px;margin:8px 0;}
+  .thumbs img{width:110px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--border);}
+  .msg{padding:10px 14px;border-radius:10px;font-size:13px;margin-top:10px;}
+  .msg.ok{background:var(--mint-light);color:#0a7a5f;}
+  .msg.err{background:#ffe0e0;color:#c0392b;}
+
+  /* --- Date/Time picker (ปุ่มเด้งปฏิทิน/นาฬิกาของเครื่อง) --- */
+  .date-field-wrap{position:relative;display:flex;align-items:center;gap:8px;}
+  .date-field-wrap input[type="text"]{flex:1;}
+  .hidden-date-input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;}
+  .mini-btn{border:none;background:var(--pink-light);color:var(--pink);width:26px;height:26px;border-radius:8px;
+    cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;padding:0;
+    line-height:1;transition:.2s;vertical-align:middle;margin-left:4px;}
+  .mini-btn:hover{background:var(--pink);color:#fff;transform:translateY(-1px);}
+  input.autofilled{border-color:var(--mint)!important;background-color:var(--mint-light);animation:fillPulse .5s ease;}
+  @keyframes fillPulse{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
+
+  /* --- Toast notification --- */
+  #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#2d3748;color:#fff;
+    padding:14px 26px;border-radius:16px;font-size:14px;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);
+    transition:transform .4s cubic-bezier(.34,1.56,.64,1);z-index:9999;max-width:90vw;text-align:center;line-height:1.5;}
+  #toast.show{transform:translateX(-50%) translateY(0);}
+  #toast.success{background:#0a7a5f;} #toast.error{background:#c0392b;} #toast.info{background:#3860c9;}
+
+  /* --- Credit footer --- */
+  .credit-footer{text-align:center;padding:26px 20px 10px;border-top:1px dashed var(--border);margin-top:10px;}
+  .credit-title{font-size:13px;color:var(--sub);letter-spacing:1px;margin-bottom:14px;}
+  .credit-row{display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:14px;}
+  .credit-badge{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:#fff;padding:8px 20px;
+    border-radius:30px;font-size:13px;font-weight:600;box-shadow:0 4px 14px rgba(255,107,157,.35);}
+  .credit-badge.alt{background:linear-gradient(135deg,#4a5568,#2d3748);box-shadow:0 4px 14px rgba(45,55,72,.35);}
+  .credit-sub{font-size:12px;color:var(--sub);}
+
+  /* --- Address autocomplete dropdown --- */
+  .addr-field{position:relative;}
+  .dropdown-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);
+    border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.18);z-index:500;overflow:hidden;max-height:260px;overflow-y:auto;}
+  .dropdown-panel.hidden{display:none;}
+  .dropdown-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;cursor:pointer;transition:.15s;}
+  .dropdown-item:hover{background:var(--pink-light);}
+  .dropdown-item .item-text{font-size:13.5px;line-height:1.4;color:var(--text);}
+  .dropdown-item .item-zip{font-size:12px;font-weight:700;color:var(--mint);white-space:nowrap;}
+  .dropdown-empty{padding:16px 10px;text-align:center;color:var(--sub);font-size:13px;}
+
+  /* --- Investigator picker --- */
+  #addInvestigatorPanel input{margin-bottom:8px;}
+  .hidden{display:none;}
+  .qrwrap{text-align:center;margin-top:10px;}
+  .print-only{display:none;}
+
+  @media print{
+    body > *:not(#printArea){ display:none !important; }
+    #printArea{ display:block !important; }
+    * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+  }
+
+  /* --- Public report view (สำหรับสแกน QR) --- */
+  .pv-wrap{max-width:520px;margin:0 auto;padding:16px;}
+  .pv-header{background:linear-gradient(135deg,var(--pink),var(--mint));border-radius:18px;padding:20px;color:#fff;
+    display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .pv-header .pv-badge{width:50px;height:50px;border-radius:50%;background:#fff3;flex-shrink:0;}
+  .pv-header h1{margin:0;font-size:18px;} .pv-header p{margin:2px 0 0;font-size:12px;opacity:.9;}
+  .pv-card{background:var(--card);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px;border:1px solid var(--border);}
+  .pv-card h2{margin:6px 0 4px;font-size:19px;color:var(--pink);}
+  .pv-card h3{margin:0 0 8px;font-size:14px;color:var(--mint);text-transform:uppercase;letter-spacing:.5px;}
+  .pv-card p{margin:4px 0;font-size:14px;}
+  .pv-sub{color:var(--sub);font-size:13px;}
+  .pv-photos{display:flex;gap:8px;margin-bottom:14px;}
+  .pv-photos img{width:50%;height:180px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--border);}
+  @media(max-width:420px){.pv-photos{flex-direction:column;} .pv-photos img{width:100%;height:200px;}}
+  /* --- Report style 1: ป้ายของกลาง --- */
+  .label-report{width:560px;margin:0 auto;background:#000;color:#fff;padding:20px;border-radius:14px;font-family:'Sarabun',sans-serif;}
+  .label-report .lr-head{display:flex;align-items:center;gap:14px;border:2px solid #fff;border-radius:30px;padding:10px 16px;margin-bottom:16px;}
+  .label-report .lr-badge{width:60px;height:60px;border-radius:50%;background:#c0392b;flex-shrink:0;}
+  .label-report h2{margin:0;font-size:22px;} .label-report p{margin:0;font-size:13px;}
+  .label-report .lr-photos{display:flex;gap:8px;margin-bottom:14px;}
+  .label-report .lr-photos img{width:50%;height:220px;object-fit:cover;border-radius:6px;background:#333;}
+  .label-report .lr-desc{text-align:center;color:#7ee8fa;font-size:15px;line-height:1.8;}
+  /* --- Report style 2: รายละเอียดคดี --- */
+  .case-report{width:700px;margin:0 auto;background:#fff;color:#000;padding:30px;font-family:'Sarabun',sans-serif;font-size:15px;line-height:1.9;}
+  .case-report h2{text-align:center;text-decoration:underline;}
+  .case-report .cr-label{text-decoration:underline;font-weight:bold;}
+  .case-report .cr-indent{margin-left:40px;}
+
+  /* --- Evidence Label (ป้ายของกลาง แบบใหม่) --- */
+  .evd-label{width:760px;display:flex;background:#fff;color:#1a2744;border-radius:20px;overflow:hidden;
+    box-shadow:0 8px 30px rgba(0,0,0,.2);font-family:'Sarabun',sans-serif;}
+  .evd-side{width:240px;background:linear-gradient(180deg,#1a2744,#0f1830);color:#fff;padding:24px 16px;text-align:center;flex-shrink:0;}
+  .evd-logo{width:78px;height:78px;border-radius:50%;background:#22315a;margin:0 auto 10px;border:2px solid #4a5a8a;
+    display:flex;align-items:center;justify-content:center;font-size:30px;}
+  .evd-badge-text{font-size:13px;font-weight:700;line-height:1.4;margin-bottom:18px;}
+  .evd-qr-title{font-size:13.5px;font-weight:700;margin-bottom:10px;line-height:1.5;}
+  .evd-qr-box{background:#fff;border-radius:12px;padding:10px;margin-bottom:12px;}
+  .evd-qr-box img{width:100%;display:block;}
+  .evd-qr-empty{font-size:11px;color:#888;padding:30px 6px;}
+  .evd-qr-sub{font-size:10.5px;line-height:1.6;opacity:.85;}
+  .evd-main{flex:1;padding:22px 24px;}
+  .evd-header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #c0392b;padding-bottom:10px;margin-bottom:12px;}
+  .evd-title{font-size:20px;font-weight:800;color:#1a2744;}
+  .evd-tag{background:#c0392b;color:#fff;font-size:11px;font-weight:700;padding:5px 12px;border-radius:6px;letter-spacing:.5px;}
+  .evd-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px dashed #dde3ef;font-size:13px;}
+  .evd-icon{width:26px;height:26px;border-radius:50%;background:#1a2744;color:#fff;display:flex;align-items:center;
+    justify-content:center;font-size:12px;flex-shrink:0;}
+  .evd-label-text{width:120px;flex-shrink:0;color:#4a5a7a;font-weight:600;}
+  .evd-value{flex:1;font-weight:700;color:#1a2744;line-height:1.55;}
+  .evd-value-red{color:#c0392b;}
+  .evd-small{font-size:11px;font-weight:400;color:#4a5a7a;}
+  .evd-footer{text-align:right;font-size:10px;color:#8a94ad;margin-top:12px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div>
+      <h1>ระบบบริหารของกลางและรายงานคดี</h1>
+      <p>สภ.ระเบาะไผ่ ภ.จว.ปราจีนบุรี — Evidence Management System</p>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()">🌓 โหมด</button>
+  </header>
+
+  <nav>
+    <button class="tab-btn active" onclick="showTab('search')" id="tabbtn-search">🔍 ค้นหา/รายงาน</button>
+    <button class="tab-btn" onclick="showTab('new')" id="tabbtn-new">📝 บันทึกคดีใหม่</button>
+    <button class="tab-btn" onclick="showTab('settings')" id="tabbtn-settings">⚙️ ตั้งค่า</button>
+  </nav>
+
+  <!-- ===================== TAB: SETTINGS ===================== -->
+  <div id="tab-settings" class="tab hidden">
+    <div class="card">
+      <h2>⚙️ ตั้งค่าการเชื่อมต่อ</h2>
+      <label>Google Apps Script Web App URL</label>
+      <input id="cfgApiUrl" placeholder="https://script.google.com/macros/s/XXXX/exec">
+      <label>URL ของเว็บแอปนี้ (หลังอัปโหลดขึ้น hosting) — ใช้สร้างลิงก์ใน QR Code</label>
+      <input id="cfgAppUrl" placeholder="https://your-hosting.example.com/evidence.html">
+      <button class="btn" onclick="saveSettings()">💾 บันทึกการตั้งค่า</button>
+      <div id="settingsMsg"></div>
+      <p style="font-size:12px;color:var(--sub);margin-top:14px;">
+        ดูวิธีสร้าง Web App URL ได้ในคอมเมนต์ด้านบนของไฟล์ AppsScript_Code.gs ที่แนบมาให้
+      </p>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: SEARCH / REPORT ===================== -->
+  <div id="tab-search" class="tab">
+    <div class="card">
+      <h2>🔍 ค้นหาคดี / ของกลาง</h2>
+      <div class="row">
+        <div>
+          <label>ค้นหาด้วยเลขคดี (เช่น 280/2569)</label>
+          <input id="searchCaseId" placeholder="280/2569">
+        </div>
+        <div>
+          <label>หรือค้นหาด้วยรหัสของกลาง (เช่น EVD-2569-0001)</label>
+          <input id="searchEvidenceId" placeholder="EVD-2569-0001">
+        </div>
+      </div>
+      <button class="btn" onclick="doSearch()">ค้นหา</button>
+      <div id="searchMsg"></div>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <!-- ===================== TAB: NEW CASE ===================== -->
+  <div id="tab-new" class="tab hidden">
+    <div class="card">
+      <h2>📝 บันทึกคดีใหม่</h2>
+      <div class="row3">
+        <div><label>เลขคดี (คดีอาญาที่)</label><input id="fCaseId" placeholder="280/2569"></div>
+        <div><label>ปจว.ข้อ</label><input id="fReportNo" placeholder="ข้อ 4"></div>
+        <div>
+          <label>วันที่เกิดเหตุ <button type="button" class="mini-btn" onclick="openTextDatePicker('fDate')" title="เลือกจากปฏิทิน">📅</button></label>
+          <div class="date-field-wrap">
+            <input type="text" id="fDate" placeholder="16 มิถุนายน 2569">
+            <input type="date" id="fDate_picker" class="hidden-date-input" onchange="applyTextDatePicker('fDate')">
+          </div>
+        </div>
+      </div>
+      <div class="row3">
+        <div>
+          <label>เวลาเกิดเหตุ <button type="button" class="mini-btn" onclick="openTextTimePicker('fTime')" title="เลือกเวลา">⏰</button></label>
+          <div class="date-field-wrap">
+            <input type="text" id="fTime" placeholder="19.00 น.">
+            <input type="time" id="fTime_picker" class="hidden-date-input" onchange="applyTextTimePicker('fTime')">
+          </div>
+        </div>
+        <div><label>พนักงานสอบสวน</label><input id="fInvName" placeholder="สุวิทย์ ซุยจรูญ"></div>
+        <div><label>ยศ/ตำแหน่ง</label><input id="fInvRank" placeholder="พ.ต.ท."></div>
+      </div>
+      <div class="row3">
+        <div><label>เบอร์โทรพนักงานสอบสวน</label><input id="fInvPhone" placeholder="081-234-5678"></div>
+        <div></div><div></div>
+      </div>
+
+      <label>👮 เลือก พงส.เจ้าของคดี (เลือกแล้วจะเติมชื่อ/ยศ/เบอร์โทรด้านบนให้อัตโนมัติ)</label>
+      <select id="fInvSelect" onchange="applyInvestigatorSelect()"></select>
+      <div id="addInvestigatorPanel" class="sub-block mint hidden">
+        <div class="row3">
+          <div><label>ยศ</label><input id="newInvRank" placeholder="พ.ต.ท."></div>
+          <div><label>ชื่อ-นามสกุล</label><input id="newInvName" placeholder="ชื่อ นามสกุล"></div>
+          <div><label>ตำแหน่ง</label><input id="newInvPosition" placeholder="สว.(สอบสวน)สภ.ระเบาะไผ่"></div>
+        </div>
+        <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678"></div>
+        <button type="button" class="btn small mint" onclick="saveNewInvestigator()">💾 เพิ่มลงรายชื่อ พงส.</button>
+      </div>
+      <label>ข้อหา / กระทำความผิดฐาน (พิมพ์แต่ละข้อหาขึ้นบรรทัดใหม่)</label>
+      <textarea id="fCharges" placeholder="1. รู้ว่าคนต่างด้าว...&#10;2. เสพและเป็นผู้ขับขี่...&#10;3. ครอบครองยาเสพติด..."></textarea>
+
+      <h3 style="color:var(--mint);margin-top:20px;">👤 ผู้ต้องหา</h3>
+      <div id="suspectList"></div>
+      <button class="btn outline small" onclick="addSuspect()">+ เพิ่มผู้ต้องหา</button>
+
+      <h3 style="color:var(--mint);margin-top:20px;">📦 รายการของกลาง</h3>
+      <div id="evidenceList"></div>
+      <button class="btn outline small" onclick="addEvidence()">+ เพิ่มของกลาง</button>
+
+      <div style="margin-top:20px;">
+        <button class="btn mint" onclick="submitCase()">✅ บันทึกข้อมูลทั้งหมด</button>
+      </div>
+      <div id="newCaseMsg"></div>
+    </div>
+  </div>
+
+  <div class="credit-footer">
+    <div class="credit-title">✦ ผู้พัฒนาระบบ ✦</div>
+    <div class="credit-row">
+      <span class="credit-badge">👮 ส.ต.ท.ราชานนท์ ฉัตร์ไตรภพ</span>
+      <span class="credit-sub">ผบ.หมู่ (ผช.พงส.) สภ.ระเบาะไผ่ ภ.จว.ปราจีนบุรี — เจ้าของไอเดียและออกแบบระบบ</span>
+    </div>
+    <div class="credit-row">
+      <span class="credit-badge alt">🤖 Claude (Anthropic)</span>
+      <span class="credit-sub">ผู้ร่วมพัฒนาโค้ดและระบบอัตโนมัติ</span>
+    </div>
+  </div>
+
+</div>
+
+  <div id="toast"></div>
+
+  <!-- report view: หน้าสวยงามสำหรับสแกน QR (แสดงแทนแอปทั้งหมดเมื่อมี ?id=... ใน URL) -->
+  <div id="reportView" class="hidden"></div>
+
+  <!-- print area -->
+  <div id="printArea" class="print-only"></div>
+
+
+<script>
+/* ---------------- CONFIG ----------------
+   หลังติดตั้งเสร็จ ให้แก้ 2 บรรทัดด้านล่างนี้เป็นของจริง แล้วอัปโหลดไฟล์นี้ทับของเดิมบน GitHub อีกครั้ง
+   (จำเป็น เพราะเวลาคนอื่นสแกน QR ด้วยมือถือเครื่องอื่น เครื่องนั้นจะไม่มีค่าที่ตั้งไว้ในแท็บ "ตั้งค่า" ของเรา
+    การใส่ค่าเริ่มต้นไว้ในโค้ดตรงนี้ ทำให้ทุกเครื่องที่เปิดลิงก์ใช้งานได้ทันทีโดยไม่ต้องตั้งค่าเอง) */
+const DEFAULT_API_URL = ''; // เช่น 'https://script.google.com/macros/s/XXXXXXXX/exec'
+const DEFAULT_APP_URL = ''; // เช่น 'https://nontkenji27.github.io/Raboapai-Evidence/'
+
+const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+
+/* ---------------- TOAST ---------------- */
+let toastTimer = null;
+function showToast(msg, type = 'info', duration){
+  const el = document.getElementById('toast');
+  el.className = 'show ' + type;
+  el.innerText = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> el.className = '', duration || (type === 'error' ? 6000 : 3000));
+}
+
+/* ---------------- DATE / TIME PICKER (ใช้ปฏิทิน/นาฬิกาของเครื่อง แปลงเป็นข้อความไทยอัตโนมัติ) ---------------- */
+function openTextDatePicker(fieldId){
+  const picker = document.getElementById(fieldId+'_picker');
+  if(!picker) return;
+  if(picker.showPicker){ try{ picker.showPicker(); }catch(e){ picker.click(); } }
+  else picker.click();
+}
+function applyTextDatePicker(fieldId){
+  const picker = document.getElementById(fieldId+'_picker');
+  const field = document.getElementById(fieldId);
+  if(!picker || !picker.value || !field) return;
+  const [y,m,dd] = picker.value.split('-').map(Number);
+  field.value = `${dd} ${THAI_MONTHS[m-1]} ${y+543}`;
+  field.classList.add('autofilled');
+  setTimeout(()=>field.classList.remove('autofilled'), 500);
+}
+function openTextTimePicker(fieldId){
+  const picker = document.getElementById(fieldId+'_picker');
+  if(!picker) return;
+  if(picker.showPicker){ try{ picker.showPicker(); }catch(e){ picker.click(); } }
+  else picker.click();
+}
+function applyTextTimePicker(fieldId){
+  const picker = document.getElementById(fieldId+'_picker');
+  const field = document.getElementById(fieldId);
+  if(!picker || !picker.value || !field) return;
+  const [hh, mm] = picker.value.split(':');
+  field.value = `${hh}.${mm} น.`;
+  field.classList.add('autofilled');
+  setTimeout(()=>field.classList.remove('autofilled'), 500);
+}
+
+/* ---------------- INVESTIGATOR (พงส.) PICKER ---------------- */
+const DEFAULT_INVESTIGATORS = [
+  {rank:'พ.ต.ท.', name:'มานิต กิจหิรัญ', position:'รอง ผกก.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ท.', name:'สุวิทย์ ซุยจรูญ', position:'สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ท.', name:'เดช ภูมิสถาน', position:'สว.(หัวหน้าคดี)สภ.วังตะเคียน ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ต.', name:'สมบัติ วังวล', position:'สว.(สอบสวน)สภ.ประจันตคาม ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.อ.', name:'กิตติพงษ์ สีหะบุตร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.อ.', name:'อรรณพ แสงจันทร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.ท.', name:'ศักดิ์สิทธิ์ ทองศรี', position:'รอง สว.(สอบสวน)สภ.กบินทร์บุรี ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.ต.', name:'ชาตรี ผลภาษี', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''}
+];
+function getInvestigatorsList(){
+  let custom = [];
+  try{ custom = JSON.parse(localStorage.getItem('ems_investigators_custom') || '[]'); }catch(e){}
+  return DEFAULT_INVESTIGATORS.concat(custom);
+}
+function renderInvestigatorOptions(){
+  const sel = document.getElementById('fInvSelect');
+  const list = getInvestigatorsList();
+  sel.innerHTML = '<option value="">-- เลือกจากรายชื่อ พงส. --</option>' +
+    list.map((o,i)=>`<option value="${i}">${escapeHtml(o.rank)}${escapeHtml(o.name)} (${escapeHtml(o.position)})</option>`).join('') +
+    '<option value="__custom__">✏️ พิมพ์เอง / เพิ่มรายชื่อใหม่</option>';
+}
+function applyInvestigatorSelect(){
+  const sel = document.getElementById('fInvSelect');
+  const panel = document.getElementById('addInvestigatorPanel');
+  if(sel.value === '__custom__'){ panel.classList.remove('hidden'); return; }
+  panel.classList.add('hidden');
+  if(sel.value === '') return;
+  const o = getInvestigatorsList()[parseInt(sel.value)];
+  if(!o) return;
+  const nameEl = document.getElementById('fInvName'), rankEl = document.getElementById('fInvRank'), phoneEl = document.getElementById('fInvPhone');
+  nameEl.value = o.name; rankEl.value = o.rank; phoneEl.value = o.phone || '';
+  [nameEl, rankEl, phoneEl].forEach(el=>{ el.classList.add('autofilled'); setTimeout(()=>el.classList.remove('autofilled'),500); });
+}
+function saveNewInvestigator(){
+  const rank = val('newInvRank'), name = val('newInvName'), position = val('newInvPosition'), phone = val('newInvPhone');
+  if(!name){ showToast('กรุณากรอกชื่อ-สกุล พงส.', 'error'); return; }
+  let custom = [];
+  try{ custom = JSON.parse(localStorage.getItem('ems_investigators_custom') || '[]'); }catch(e){}
+  custom.push({rank, name, position, phone});
+  localStorage.setItem('ems_investigators_custom', JSON.stringify(custom));
+  renderInvestigatorOptions();
+  document.getElementById('fInvName').value = name;
+  document.getElementById('fInvRank').value = rank;
+  document.getElementById('fInvPhone').value = phone;
+  document.getElementById('newInvRank').value = '';
+  document.getElementById('newInvName').value = '';
+  document.getElementById('newInvPosition').value = '';
+  document.getElementById('newInvPhone').value = '';
+  document.getElementById('addInvestigatorPanel').classList.add('hidden');
+  document.getElementById('fInvSelect').value = '';
+  showToast('✅ เพิ่มรายชื่อ ' + rank + name + ' ไว้ในระบบแล้ว', 'success');
+}
+renderInvestigatorOptions();
+
+/* ---------------- EVIDENCE TYPE (ประเภทของกลาง) กับคำลักษณนามอัตโนมัติ ---------------- */
+const EVIDENCE_TYPES = [
+  {name:'รถยนต์', unit:'คัน'}, {name:'รถจักรยานยนต์', unit:'คัน'}, {name:'รถบรรทุก', unit:'คัน'}, {name:'เรือ', unit:'ลำ'},
+  {name:'อาวุธปืน', unit:'กระบอก'}, {name:'กระสุนปืน', unit:'นัด'}, {name:'วัตถุระเบิด', unit:'ลูก'}, {name:'มีด/อาวุธมีคม', unit:'เล่ม'},
+  {name:'ยาเสพติดให้โทษประเภท 1 (ยาบ้า/ไอซ์)', unit:'เม็ด'}, {name:'ยาเสพติดให้โทษประเภท 2 (เฮโรอีน)', unit:'กรัม'},
+  {name:'พืชกระท่อม', unit:'กรัม'}, {name:'กัญชา', unit:'กรัม'}, {name:'โทรศัพท์มือถือ', unit:'เครื่อง'},
+  {name:'คอมพิวเตอร์/โน้ตบุ๊ก', unit:'เครื่อง'}, {name:'เงินสด', unit:'บาท'}, {name:'ทองคำ/เครื่องประดับ', unit:'ชิ้น'},
+  {name:'เอกสาร/หลักฐาน', unit:'ฉบับ'}, {name:'สุรา', unit:'ขวด'}, {name:'น้ำมันเชื้อเพลิง', unit:'ลิตร'},
+  {name:'เครื่องมือช่าง/อุปกรณ์การเกษตร', unit:'ชิ้น'}, {name:'เครื่องใช้ไฟฟ้า', unit:'เครื่อง'}, {name:'กระเป๋า/สัมภาระ', unit:'ใบ'},
+  {name:'เสื้อผ้า', unit:'ชิ้น'}, {name:'สัตว์ป่า/ซากสัตว์', unit:'ตัว'}, {name:'ไม้/ไม้แปรรูป', unit:'ท่อน'},
+  {name:'เครื่องสำอาง/ยา', unit:'กล่อง'}, {name:'บุหรี่/ยาสูบ', unit:'ซอง'}, {name:'พระเครื่อง/วัตถุโบราณ', unit:'องค์'},
+  {name:'ชิ้นส่วนอิเล็กทรอนิกส์', unit:'ชิ้น'}, {name:'อื่นๆ', unit:'ชิ้น'}
+];
+function applyEvidenceTypeUnit(id){
+  const catInput = document.getElementById(id+'_category');
+  const unitInput = document.getElementById(id+'_unit');
+  if(!catInput || !unitInput) return;
+  const match = EVIDENCE_TYPES.find(t => t.name === catInput.value.trim());
+  if(match){
+    unitInput.value = match.unit;
+    unitInput.classList.add('autofilled');
+    setTimeout(()=>unitInput.classList.remove('autofilled'), 500);
+  }
+}
+(function(){
+  const dl = document.createElement('datalist');
+  dl.id = 'evidenceTypeList';
+  dl.innerHTML = EVIDENCE_TYPES.map(t=>`<option value="${t.name}">`).join('');
+  document.body.appendChild(dl);
+})();
+
+/* ---------------- SMART THAI ADDRESS AUTOCOMPLETE ---------------- */
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+const THAI_ADDRESS_SOURCES = [
+  'https://cdn.jsdelivr.net/gh/kongvut/thai-province-data@master/api/latest/province_with_district_and_sub_district.json',
+  'https://raw.githubusercontent.com/kongvut/thai-province-data/master/api/latest/province_with_district_and_sub_district.json'
+];
+let THAI_ADDRESS_DB = null;
+let thaiAddressLoadPromise = null;
+const _addrSuggestCache = {};
+
+function loadThaiAddressDB(){
+  if(thaiAddressLoadPromise) return thaiAddressLoadPromise;
+  thaiAddressLoadPromise = (async () => {
+    for(const url of THAI_ADDRESS_SOURCES){
+      try{
+        const res = await fetch(url);
+        if(!res.ok) continue;
+        const data = await res.json();
+        const flat = [];
+        data.forEach(prov => {
+          (prov.districts || []).forEach(dist => {
+            (dist.sub_districts || []).forEach(sub => {
+              flat.push({ tambon: sub.name_th, amphoe: dist.name_th, province: prov.name_th, zip: sub.zip_code || '' });
+            });
+          });
+        });
+        THAI_ADDRESS_DB = flat;
+        return flat;
+      }catch(e){ /* ลอง source ถัดไป */ }
+    }
+    THAI_ADDRESS_DB = [];
+    return [];
+  })();
+  return thaiAddressLoadPromise;
+}
+
+function setupAddressAutocomplete(prefix){
+  ['tambon','amphoe','province'].forEach(key=>{
+    const input = document.getElementById(prefix+'_'+key);
+    const panel = document.getElementById(prefix+'_'+key+'_sugg');
+    if(!input || !panel) return;
+    input.addEventListener('input', ()=> showAddressSuggestions(prefix, key));
+    input.addEventListener('focus', ()=> { if(input.value.trim()) showAddressSuggestions(prefix, key); });
+  });
+}
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.addr-suggest').forEach(panel=>{
+    const input = document.getElementById(panel.id.replace('_sugg',''));
+    if(panel.classList.contains('hidden')) return;
+    if(!panel.contains(e.target) && e.target !== input) panel.classList.add('hidden');
+  });
+});
+
+async function showAddressSuggestions(prefix, key){
+  const input = document.getElementById(prefix+'_'+key);
+  const panel = document.getElementById(prefix+'_'+key+'_sugg');
+  const q = input.value.trim();
+  if(!q){ panel.classList.add('hidden'); return; }
+  if(!THAI_ADDRESS_DB){ await loadThaiAddressDB(); }
+  if(input.value.trim() !== q) return;
+  const db = THAI_ADDRESS_DB || [];
+  const matches = db.filter(r => r[key] && r[key].includes(q)).slice(0, 30);
+  _addrSuggestCache[prefix+'_'+key] = matches;
+  if(matches.length === 0){
+    panel.innerHTML = db.length
+      ? `<div class="dropdown-empty">ไม่พบข้อมูลที่ตรงกัน — ใช้ข้อความที่พิมพ์เองได้เลย</div>`
+      : `<div class="dropdown-empty">กำลังโหลดฐานข้อมูลที่อยู่...</div>`;
+  } else {
+    panel.innerHTML = matches.map((m,i)=>`
+      <div class="dropdown-item" onclick="fillAddress('${prefix}','${key}',${i})">
+        <div class="item-text">ต.${escapeHtml(m.tambon)} อ.${escapeHtml(m.amphoe)} จ.${escapeHtml(m.province)}</div>
+        <div class="item-zip">${m.zip||''}</div>
+      </div>`).join('');
+  }
+  panel.classList.remove('hidden');
+}
+
+function fillAddress(prefix, key, idx){
+  const m = (_addrSuggestCache[prefix+'_'+key] || [])[idx];
+  if(!m) return;
+  document.getElementById(prefix+'_tambon').value = m.tambon;
+  document.getElementById(prefix+'_amphoe').value = m.amphoe;
+  document.getElementById(prefix+'_province').value = m.province;
+  ['tambon','amphoe','province'].forEach(k=>{
+    const p = document.getElementById(prefix+'_'+k+'_sugg');
+    if(p) p.classList.add('hidden');
+  });
+}
+
+/* ---------------- THEME ---------------- */
+function toggleTheme(){
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next === 'dark' ? 'dark' : '');
+  localStorage.setItem('ems_theme', next);
+}
+(function(){
+  const saved = localStorage.getItem('ems_theme');
+  if(saved === 'dark') document.documentElement.setAttribute('data-theme','dark');
+})();
+
+/* ---------------- TABS ---------------- */
+function showTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.remove('hidden');
+  document.getElementById('tabbtn-'+name).classList.add('active');
+}
+
+/* ---------------- SETTINGS ---------------- */
+function loadSettings(){
+  document.getElementById('cfgApiUrl').value = localStorage.getItem('ems_api_url') || '';
+  document.getElementById('cfgAppUrl').value = localStorage.getItem('ems_app_url') || '';
+}
+function saveSettings(){
+  localStorage.setItem('ems_api_url', document.getElementById('cfgApiUrl').value.trim());
+  localStorage.setItem('ems_app_url', document.getElementById('cfgAppUrl').value.trim());
+  document.getElementById('settingsMsg').innerHTML = '<div class="msg ok">บันทึกการตั้งค่าเรียบร้อยแล้ว</div>';
+  showToast('💾 บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success');
+}
+function getApiUrl(){ return localStorage.getItem('ems_api_url') || DEFAULT_API_URL; }
+function getAppUrl(){ return localStorage.getItem('ems_app_url') || DEFAULT_APP_URL; }
+loadSettings();
+
+/* ---------------- DYNAMIC SUSPECT / EVIDENCE ROWS ---------------- */
+let suspectCount = 0, evidenceCount = 0;
+
+function addSuspect(){
+  suspectCount++;
+  const id = 's'+suspectCount;
+  const div = document.createElement('div');
+  div.className = 'sub-block';
+  div.id = 'block-'+id;
+  div.innerHTML = `
+    <button class="remove-x" onclick="document.getElementById('block-${id}').remove()">✕</button>
+    <div class="row">
+      <div><label>ชื่อ-นามสกุล</label><input id="${id}_name" placeholder="นายฤทธิเดช บัวบาล"></div>
+      <div><label>อายุ</label><input id="${id}_age" placeholder="XX ปี"></div>
+    </div>
+    <div class="row">
+      <div><label>สัญชาติ</label><input id="${id}_nat" placeholder="ไทย"></div>
+      <div><label>เลขบัตรประชาชน</label><input id="${id}_idcard" placeholder="3-25XX-XXXX-72-4"></div>
+    </div>
+    <label>ที่อยู่ (บ้านเลขที่/หมู่/ถนน)</label>
+    <input id="${id}_addr1" placeholder="เช่น 99 หมู่ 3">
+    <div class="row3">
+      <div class="addr-field">
+        <label>ตำบล/แขวง <span style="font-size:11px;color:var(--sub);">(พิมพ์ค้นหาได้)</span></label>
+        <input type="text" id="${id}_tambon" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา...">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_tambon_sugg"></div>
+      </div>
+      <div class="addr-field">
+        <label>อำเภอ/เขต <span style="font-size:11px;color:var(--sub);">(พิมพ์ค้นหาได้)</span></label>
+        <input type="text" id="${id}_amphoe" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา...">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_amphoe_sugg"></div>
+      </div>
+      <div class="addr-field">
+        <label>จังหวัด</label>
+        <input type="text" id="${id}_province" autocomplete="off">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_province_sugg"></div>
+      </div>
+    </div>`;
+  document.getElementById('suspectList').appendChild(div);
+  setupAddressAutocomplete(id);
+}
+
+function addEvidence(){
+  evidenceCount++;
+  const id = 'e'+evidenceCount;
+  const div = document.createElement('div');
+  div.className = 'sub-block mint';
+  div.id = 'block-'+id;
+  div.innerHTML = `
+    <button class="remove-x" onclick="document.getElementById('block-${id}').remove()">✕</button>
+    <div class="row3">
+      <div><label>บัญชีของกลางลำดับที่</label><input id="${id}_order" placeholder="1"></div>
+      <div>
+        <label>ประเภทของกลาง <span style="font-size:11px;color:var(--sub);">(พิมพ์ค้นหาได้)</span></label>
+        <input list="evidenceTypeList" id="${id}_category" oninput="applyEvidenceTypeUnit('${id}')" placeholder="เช่น รถยนต์, ยาเสพติดให้โทษประเภท 1">
+      </div>
+      <div><label>สถานะ</label>
+        <select id="${id}_status">
+          <option>เก็บรักษา</option><option>คืนแล้ว</option><option>ทำลายแล้ว</option>
+        </select>
+      </div>
+    </div>
+    <div class="row3">
+      <div><label>จำนวน</label><input type="number" id="${id}_qty" placeholder="1" min="0" step="any"></div>
+      <div><label>หน่วยนับ (คำลักษณนาม) <span style="font-size:11px;color:var(--sub);">(เติมอัตโนมัติ แก้ได้)</span></label><input id="${id}_unit" placeholder="คัน / เม็ด / กรัม ฯลฯ"></div>
+      <div></div>
+    </div>
+    <label>รายละเอียดเพิ่มเติม</label>
+    <textarea id="${id}_desc" placeholder="เช่น ยี่ห้อ NISSAN รุ่น NAVARA หมายเลขทะเบียน 5กน 5273 กรุงเทพมหานคร"></textarea>
+
+    <div class="row3">
+      <div>
+        <label>วันที่ตรวจยึด <button type="button" class="mini-btn" onclick="openTextDatePicker('${id}_seizedate')" title="เลือกจากปฏิทิน">📅</button></label>
+        <div class="date-field-wrap">
+          <input type="text" id="${id}_seizedate" placeholder="20 กรกฎาคม 2569">
+          <input type="date" id="${id}_seizedate_picker" class="hidden-date-input" onchange="applyTextDatePicker('${id}_seizedate')">
+        </div>
+      </div>
+      <div>
+        <label>เวลาตรวจยึด <button type="button" class="mini-btn" onclick="openTextTimePicker('${id}_seizetime')" title="เลือกเวลา">⏰</button></label>
+        <div class="date-field-wrap">
+          <input type="text" id="${id}_seizetime" placeholder="14.30 น.">
+          <input type="time" id="${id}_seizetime_picker" class="hidden-date-input" onchange="applyTextTimePicker('${id}_seizetime')">
+        </div>
+      </div>
+      <div><label>บ้านเลขที่/หมู่/ถนน</label><input id="${id}_place" placeholder="เช่น 123 หมู่ 4"></div>
+    </div>
+    <div class="row3">
+      <div class="addr-field">
+        <label>ตำบล/แขวง <span style="font-size:11px;color:var(--sub);">(พิมพ์ค้นหาได้)</span></label>
+        <input type="text" id="${id}_tambon" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา...">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_tambon_sugg"></div>
+      </div>
+      <div class="addr-field">
+        <label>อำเภอ/เขต <span style="font-size:11px;color:var(--sub);">(พิมพ์ค้นหาได้)</span></label>
+        <input type="text" id="${id}_amphoe" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา...">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_amphoe_sugg"></div>
+      </div>
+      <div class="addr-field">
+        <label>จังหวัด</label>
+        <input type="text" id="${id}_province" autocomplete="off">
+        <div class="dropdown-panel hidden addr-suggest" id="${id}_province_sugg"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div><label>รูปที่ 1</label><input type="file" accept="image/*" id="${id}_photo1"></div>
+      <div><label>รูปที่ 2</label><input type="file" accept="image/*" id="${id}_photo2"></div>
+    </div>`;
+  document.getElementById('evidenceList').appendChild(div);
+  setupAddressAutocomplete(id);
+}
+addSuspect(); addEvidence();
+
+function fileToBase64(input){
+  return new Promise((resolve)=>{
+    const f = input.files[0];
+    if(!f){ resolve(''); return; }
+    const r = new FileReader();
+    r.onload = ()=> resolve(r.result);
+    r.onerror = ()=> resolve('');
+    r.readAsDataURL(f);
+  });
+}
+
+/* ---------------- SUBMIT NEW CASE ---------------- */
+async function submitCase(){
+  const api = getApiUrl();
+  const msgDiv = document.getElementById('newCaseMsg');
+  if(!api){ msgDiv.innerHTML = '<div class="msg err">กรุณาตั้งค่า Apps Script Web App URL ในแท็บ "ตั้งค่า" ก่อน</div>'; return; }
+  const caseId = document.getElementById('fCaseId').value.trim();
+  if(!caseId){ msgDiv.innerHTML = '<div class="msg err">กรุณากรอกเลขคดี</div>'; return; }
+
+  msgDiv.innerHTML = '<div class="msg ok">⏳ กำลังบันทึกข้อมูล กรุณารอสักครู่...</div>';
+
+  const suspects = [];
+  document.querySelectorAll('#suspectList .sub-block').forEach(block=>{
+    const id = block.id.replace('block-','');
+    suspects.push({
+      name: val(id+'_name'), age: val(id+'_age'),
+      nationality: val(id+'_nat'), idCard: val(id+'_idcard'),
+      address: val(id+'_addr1'), tambon: val(id+'_tambon'),
+      amphoe: val(id+'_amphoe'), province: val(id+'_province')
+    });
+  });
+
+  const evidenceBlocks = Array.from(document.querySelectorAll('#evidenceList .sub-block'));
+  const evidenceItems = [];
+  for(const block of evidenceBlocks){
+    const id = block.id.replace('block-','');
+    const photo1 = await fileToBase64(document.getElementById(id+'_photo1'));
+    const photo2 = await fileToBase64(document.getElementById(id+'_photo2'));
+    evidenceItems.push({
+      listOrder: val(id+'_order'), category: val(id+'_category'), description: val(id+'_desc'),
+      quantity: val(id+'_qty'), unit: val(id+'_unit'),
+      seizeDate: val(id+'_seizedate'), seizeTime: val(id+'_seizetime'), seizePlace: val(id+'_place'),
+      seizeTambon: val(id+'_tambon'), seizeAmphoe: val(id+'_amphoe'), seizeProvince: val(id+'_province'),
+      status: val(id+'_status'), photo1Base64: photo1, photo2Base64: photo2
+    });
+  }
+
+  const payload = {
+    caseId, policeReportNo: val('fReportNo'), incidentDate: val('fDate'), incidentTime: val('fTime'),
+    investigatorName: val('fInvName'), investigatorRank: val('fInvRank'), investigatorPhone: val('fInvPhone'),
+    charges: val('fCharges'), suspects, evidenceItems
+  };
+
+  try{
+    const res = await fetch(api, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // เลี่ยง CORS preflight
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if(data.ok){
+      msgDiv.innerHTML = '<div class="msg ok">✅ บันทึกสำเร็จ! รหัสของกลางที่สร้าง: '
+        + data.evidenceIds.map(x=>'<span class="pill">'+x+'</span>').join('') + '</div>';
+      showToast('✅ บันทึกข้อมูลคดี ' + caseId + ' สำเร็จ', 'success');
+    } else {
+      msgDiv.innerHTML = '<div class="msg err">เกิดข้อผิดพลาด: '+ (data.error||'ไม่ทราบสาเหตุ') +'</div>';
+      showToast('❌ บันทึกไม่สำเร็จ: ' + (data.error||'ไม่ทราบสาเหตุ'), 'error');
+    }
+  }catch(err){
+    msgDiv.innerHTML = '<div class="msg err">เชื่อมต่อไม่สำเร็จ: '+err+'</div>';
+    showToast('❌ เชื่อมต่อไม่สำเร็จ: ' + err, 'error');
+  }
+}
+function val(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+/* ---------------- SEARCH ---------------- */
+async function doSearch(){
+  const api = getApiUrl();
+  const msgDiv = document.getElementById('searchMsg');
+  const resultsDiv = document.getElementById('searchResults');
+  resultsDiv.innerHTML = '';
+  if(!api){ msgDiv.innerHTML = '<div class="msg err">กรุณาตั้งค่า Apps Script Web App URL ในแท็บ "ตั้งค่า" ก่อน</div>'; return; }
+
+  const caseId = document.getElementById('searchCaseId').value.trim();
+  const evidenceId = document.getElementById('searchEvidenceId').value.trim();
+  if(!caseId && !evidenceId){ msgDiv.innerHTML = '<div class="msg err">กรุณากรอกเลขคดีหรือรหัสของกลาง</div>'; return; }
+
+  msgDiv.innerHTML = '<div class="msg ok">⏳ กำลังค้นหา...</div>';
+  let url;
+  if(evidenceId) url = api + '?action=getEvidence&evidenceId=' + encodeURIComponent(evidenceId);
+  else url = api + '?action=getCase&caseId=' + encodeURIComponent(caseId);
+
+  try{
+    const res = await fetch(url);
+    const data = await res.json();
+    if(!data.ok){ msgDiv.innerHTML = '<div class="msg err">'+data.error+'</div>'; showToast('❌ '+data.error, 'error'); return; }
+    msgDiv.innerHTML = '<div class="msg ok">พบข้อมูลคดี '+data.case.CaseID+'</div>';
+    renderResults(data);
+  }catch(err){
+    msgDiv.innerHTML = '<div class="msg err">เชื่อมต่อไม่สำเร็จ: '+err+'</div>';
+    showToast('❌ เชื่อมต่อไม่สำเร็จ: ' + err, 'error');
+  }
+}
+
+function renderResults(data){
+  const c = data.case;
+  const resultsDiv = document.getElementById('searchResults');
+  let html = `<div class="card">
+    <h2>คดีอาญาที่ ${c.CaseID}</h2>
+    <p style="color:var(--sub)">ปจว.ข้อ ${c.PoliceReportNo||'-'} ลง ${c.IncidentDate||'-'} เวลา ${c.IncidentTime||'-'}</p>
+    <p style="color:var(--sub)">พนักงานสอบสวน: ${c.InvestigatorRank||''} ${c.InvestigatorName||''}</p>
+  </div>`;
+
+  data.evidence.forEach(ev=>{
+    html += `<div class="result-item">
+      <b>${ev.EvidenceID}</b> — บัญชีของกลางลำดับที่ ${ev.ListOrder||'-'} <span class="pill">${ev.Status||''}</span>
+      <div class="thumbs">
+        ${ev.Photo1URL? `<img src="${ev.Photo1URL}" referrerpolicy="no-referrer">`:''}
+        ${ev.Photo2URL? `<img src="${ev.Photo2URL}" referrerpolicy="no-referrer">`:''}
+      </div>
+      <p>${[ev.Category, ev.Description].filter(Boolean).join(' — ')||'-'}</p>
+      <button class="btn small" onclick='printLabel(${JSON.stringify(c)},${JSON.stringify(data.suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์ป้ายของกลาง</button>
+      <button class="btn small mint" onclick='printCaseDetail(${JSON.stringify(c)},${JSON.stringify(data.suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์รายละเอียดคดี</button>
+      <button class="btn small outline" onclick="showQr('${ev.EvidenceID}')">📱 QR Code</button>
+      <div class="qrwrap" id="qr-${ev.EvidenceID}"></div>
+    </div>`;
+  });
+  resultsDiv.innerHTML = html;
+}
+
+/* ---------------- QR CODE ---------------- */
+function showQr(evidenceId){
+  const appUrl = getAppUrl();
+  const target = document.getElementById('qr-'+evidenceId);
+  target.innerHTML = '';
+  if(!appUrl){
+    target.innerHTML = '<div class="msg err">กรุณาตั้งค่า URL ของเว็บแอปนี้ (หลังอัปโหลดขึ้น hosting) ในแท็บ "ตั้งค่า" ก่อนสร้าง QR</div>';
+    return;
+  }
+  const link = appUrl + (appUrl.includes('?') ? '&' : '?') + 'id=' + encodeURIComponent(evidenceId);
+  new QRCode(target, { text: link, width: 140, height: 140, colorDark: "#ff6b9d", colorLight: "#ffffff" });
+  const p = document.createElement('p');
+  p.style.fontSize = '12px'; p.style.color = 'var(--sub)';
+  p.textContent = link;
+  target.appendChild(p);
+}
+
+/* ---------------- PRINT: LABEL REPORT (ป้ายของกลาง แบบใหม่ พร้อม QR ฝังในตัว) ---------------- */
+async function generateQrDataUrl(evidenceId, colorDark){
+  const appUrl = getAppUrl();
+  if(!appUrl) return null;
+  const link = appUrl + (appUrl.includes('?') ? '&' : '?') + 'id=' + encodeURIComponent(evidenceId);
+  const temp = document.createElement('div');
+  temp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;';
+  document.body.appendChild(temp);
+  new QRCode(temp, { text: link, width: 260, height: 260, colorDark: colorDark||'#1a2744', colorLight: '#ffffff' });
+  // QRCode.js render แบบ async ภายใน ให้รอสักครู่ก่อนอ่านผลลัพธ์
+  await new Promise(resolve=>setTimeout(resolve, 200));
+  const imgEl = temp.querySelector('img');
+  const canvasEl = temp.querySelector('canvas');
+  let dataUrl = null;
+  if(imgEl && imgEl.src && imgEl.src.startsWith('data:')) dataUrl = imgEl.src;
+  else if(canvasEl) dataUrl = canvasEl.toDataURL('image/png');
+  document.body.removeChild(temp);
+  return dataUrl;
+}
+
+function formatEvidenceLine(ev){
+  const qty = ev.Quantity ? `${ev.Quantity} ${ev.Unit||''}`.trim() : '';
+  const main = [ev.Category, ev.Description].filter(Boolean).join(' ');
+  return (main || '-') + (qty ? ' จำนวน ' + qty : '');
+}
+function formatSeizePlace(ev){
+  return [ev.SeizePlace, ev.SeizeTambon?('ต.'+ev.SeizeTambon):'', ev.SeizeAmphoe?('อ.'+ev.SeizeAmphoe):'',
+    ev.SeizeProvince?('จ.'+ev.SeizeProvince):''].filter(Boolean).join(' ');
+}
+
+async function printLabel(c, suspects, ev){
+  const qrDataUrl = await generateQrDataUrl(ev.EvidenceID, '#1a2744');
+  const suspectNames = (suspects && suspects.length)
+    ? suspects.map(s=>s.Name).filter(Boolean).join(', ')
+    : '-';
+  const seizeDate = ev.SeizeDate || c.IncidentDate || '-';
+  const seizeTime = ev.SeizeTime || c.IncidentTime || '';
+  const seizePlace = formatSeizePlace(ev) || '-';
+  const chargesText = (c.Charges||'').split('\n').filter(x=>x.trim()).join(' / ') || '-';
+
+  const html = `<div class="evd-label">
+    <div class="evd-side">
+      <div class="evd-logo">🛡️</div>
+      <div class="evd-badge-text">สภ.ระเบาะไผ่<br>ภ.จว.ปราจีนบุรี</div>
+      <div class="evd-qr-title">ดูรายละเอียดคดี<br>สแกน QR Code</div>
+      <div class="evd-qr-box">${qrDataUrl ? `<img src="${qrDataUrl}">` : `<div class="evd-qr-empty">ยังไม่ได้ตั้งค่า URL เว็บแอปในแท็บ "ตั้งค่า"</div>`}</div>
+      <div class="evd-qr-sub">สแกนเพื่อดูข้อมูลคดี รายละเอียดของกลาง และเอกสารที่เกี่ยวข้อง</div>
+    </div>
+    <div class="evd-main">
+      <div class="evd-header">
+        <div class="evd-title">⚖ ของกลางในคดีอาญา</div>
+        <div class="evd-tag">ป้ายของกลาง EVIDENCE</div>
+      </div>
+      <div class="evd-row"><span class="evd-icon">📁</span><span class="evd-label-text">เลขคดีอาญา</span><span class="evd-value evd-value-red">${c.CaseID}</span></div>
+      <div class="evd-row"><span class="evd-icon">🗂️</span><span class="evd-label-text">เลขบัญชีของกลาง</span><span class="evd-value">${ev.EvidenceID} <span class="evd-small">ลำดับที่ ${ev.ListOrder||'-'}</span></span></div>
+      <div class="evd-row"><span class="evd-icon">👤</span><span class="evd-label-text">ชื่อผู้ต้องหา</span><span class="evd-value">${suspectNames}</span></div>
+      <div class="evd-row"><span class="evd-icon">👮</span><span class="evd-label-text">พนักงานสอบสวน</span><span class="evd-value">${c.InvestigatorRank||''} ${c.InvestigatorName||''}${c.InvestigatorPhone?`<br><span class="evd-small">โทร. ${c.InvestigatorPhone}</span>`:''}</span></div>
+      <div class="evd-row"><span class="evd-icon">⛓️</span><span class="evd-label-text">ข้อหา</span><span class="evd-value">${chargesText}</span></div>
+      <div class="evd-row"><span class="evd-icon">📦</span><span class="evd-label-text">ประเภทของกลาง</span><span class="evd-value">${formatEvidenceLine(ev)}</span></div>
+      <div class="evd-row"><span class="evd-icon">📅</span><span class="evd-label-text">วันที่ตรวจยึด</span><span class="evd-value">${seizeDate}${seizeTime?' เวลา '+seizeTime:''}</span></div>
+      <div class="evd-row"><span class="evd-icon">📍</span><span class="evd-label-text">สถานที่ตรวจยึด</span><span class="evd-value">${seizePlace}</span></div>
+      <div class="evd-footer">จัดทำโดย สภ.ระเบาะไผ่ ภ.จว.ปราจีนบุรี</div>
+    </div>
+  </div>`;
+  await doPrint(html);
+}
+
+/* ---------------- PRINT: CASE DETAIL REPORT (แบบภาพ 2) ---------------- */
+function printCaseDetail(c, suspects, ev){
+  const chargesLines = (c.Charges||'').split('\n').filter(x=>x.trim());
+  const chargesHtml = chargesLines.map((line,i)=>`<p class="cr-indent">${line}</p>`).join('');
+  const suspectsHtml = suspects.map((s,i)=>{
+    const addrParts = [s.Address, s.Tambon?('ต.'+s.Tambon):'', s.Amphoe?('อ.'+s.Amphoe):'', s.Province?('จ.'+s.Province):''].filter(Boolean).join(' ');
+    return `<p class="cr-indent">${i+1}.<u>${s.Name||''}</u> อายุ ${s.Age||'XX'} ปี สัญชาติ${s.Nationality||'ไทย'} หมายเลขบัตรประชาชน ${s.IDCard||''}${addrParts?' อยู่บ้านเลขที่ '+addrParts:''}</p>`;
+  }).join('');
+  const seizePlace = formatSeizePlace(ev);
+  const html = `<div class="case-report">
+    <h2>รายละเอียดคดี</h2>
+    <p><span class="cr-label">คดีอาญาที่</span> ${c.CaseID} ปจว.ข้อ ${c.PoliceReportNo||''} ลง ${c.IncidentDate||''} เวลา ${c.IncidentTime||''} น.</p>
+    <p><span class="cr-label">บัญชีของกลางลำดับที่</span> ${ev.ListOrder||'-'} ยึดเป็นของกลางในคดี</p>
+    <p><span class="cr-label">ผู้ต้องหา :</span></p>
+    ${suspectsHtml}
+    <p><span class="cr-label">รายการของกลาง :</span></p>
+    <p class="cr-indent">1.${formatEvidenceLine(ev)}</p>
+    ${seizePlace ? `<p class="cr-indent">ตรวจยึดเมื่อวันที่ ${ev.SeizeDate||c.IncidentDate||'-'} เวลา ${ev.SeizeTime||c.IncidentTime||'-'} น. สถานที่ ${seizePlace}</p>` : ''}
+    <p><span class="cr-label">กระทำความผิดฐาน :</span></p>
+    ${chargesHtml}
+    <p><span class="cr-label">พนักงานสอบสวน :</span> ${c.InvestigatorRank||''} ${c.InvestigatorName||''} พงส.ผู้รับผิดชอบคดี</p>
+  </div>`;
+  doPrint(html);
+}
+
+async function doPrint(html){
+  const area = document.getElementById('printArea');
+  area.innerHTML = html;
+  // รอให้รูปภาพทุกรูปในหน้าที่จะพิมพ์โหลดเสร็จก่อน (กันปัญหารูปไม่ขึ้นตอนพิมพ์)
+  const imgs = Array.from(area.querySelectorAll('img'));
+  await Promise.all(imgs.map(img=>{
+    if(img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise(resolve=>{
+      img.addEventListener('load', resolve, { once:true });
+      img.addEventListener('error', resolve, { once:true });
+      setTimeout(resolve, 5000); // กันค้างถ้ารูปโหลดไม่สำเร็จเลย
+    });
+  }));
+  requestAnimationFrame(()=> setTimeout(()=>window.print(), 60));
+}
+
+/* ---------------- PUBLIC REPORT VIEW (หน้าที่เด้งขึ้นเมื่อสแกน QR) ---------------- */
+async function initPublicView(evidenceId){
+  document.querySelector('.app').style.display = 'none';
+  const rv = document.getElementById('reportView');
+  rv.classList.remove('hidden');
+  rv.innerHTML = '<div class="pv-wrap"><div class="pv-card" style="text-align:center;">⏳ กำลังโหลดข้อมูล...</div></div>';
+
+  const api = getApiUrl();
+  if(!api){
+    rv.innerHTML = '<div class="pv-wrap"><div class="pv-card">⚠️ ยังไม่ได้ตั้งค่าเชื่อมต่อระบบในเครื่องนี้ กรุณาติดต่อผู้ดูแลระบบ</div></div>';
+    return;
+  }
+  try{
+    const res = await fetch(api + '?action=getEvidence&evidenceId=' + encodeURIComponent(evidenceId));
+    const data = await res.json();
+    if(!data.ok){
+      rv.innerHTML = '<div class="pv-wrap"><div class="pv-card">❌ '+(data.error||'ไม่พบข้อมูล')+'</div></div>';
+      return;
+    }
+    renderPublicView(data, evidenceId);
+  }catch(err){
+    rv.innerHTML = '<div class="pv-wrap"><div class="pv-card">❌ เชื่อมต่อไม่สำเร็จ: '+err+'</div></div>';
+  }
+}
+
+function renderPublicView(data, evidenceId){
+  const c = data.case;
+  const ev = data.evidence.find(x=>String(x.EvidenceID)===String(evidenceId)) || data.evidence[0];
+  const suspects = data.suspects || [];
+  const chargesHtml = (c.Charges||'').split('\n').filter(x=>x.trim()).map(l=>`<p>${l}</p>`).join('') || '<p>-</p>';
+  const suspectsHtml = suspects.map(s=>{
+    const addrParts = [s.Address, s.Tambon?('ต.'+s.Tambon):'', s.Amphoe?('อ.'+s.Amphoe):'', s.Province?('จ.'+s.Province):''].filter(Boolean).join(' ');
+    return `<p><b>${s.Name||''}</b> อายุ ${s.Age||'-'} ปี สัญชาติ${s.Nationality||'ไทย'} เลขบัตร ปชช. ${s.IDCard||'-'}${addrParts?'<br><span class="pv-sub">อยู่ '+addrParts+'</span>':''}</p>`;
+  }).join('') || '<p>-</p>';
+
+  document.getElementById('reportView').innerHTML = `
+    <div class="pv-wrap">
+      <div class="pv-header">
+        <div class="pv-badge"></div>
+        <div><h1>สภ.ระเบาะไผ่</h1><p>ภ.จว.ปราจีนบุรี</p></div>
+      </div>
+      <div class="pv-card">
+        <span class="pill">${ev.EvidenceID}</span>
+        <h2>คดีอาญาที่ ${c.CaseID}</h2>
+        <p class="pv-sub">ปจว.ข้อ ${c.PoliceReportNo||'-'} ลง ${c.IncidentDate||'-'} เวลา ${c.IncidentTime||'-'} น.</p>
+      </div>
+      <div class="pv-photos">
+        ${ev.Photo1URL?`<img src="${ev.Photo1URL}" referrerpolicy="no-referrer">`:''}
+        ${ev.Photo2URL?`<img src="${ev.Photo2URL}" referrerpolicy="no-referrer">`:''}
+      </div>
+      <div class="pv-card">
+        <h3>📦 รายการของกลาง</h3>
+        <p>${formatEvidenceLine(ev)}</p>
+        ${ev.Description?`<p class="pv-sub">${ev.Description}</p>`:''}
+        <span class="pill">สถานะ: ${ev.Status||'-'}</span> <span class="pill">บัญชีลำดับที่ ${ev.ListOrder||'-'}</span>
+        ${(ev.SeizeDate||ev.SeizeTime)?`<p class="pv-sub">🗓️ ตรวจยึดเมื่อ ${ev.SeizeDate||'-'} ${ev.SeizeTime?'เวลา '+ev.SeizeTime:''}</p>`:''}
+        ${formatSeizePlace(ev)?`<p class="pv-sub">📍 ${formatSeizePlace(ev)}</p>`:''}
+      </div>
+      <div class="pv-card"><h3>👤 ผู้ต้องหา</h3>${suspectsHtml}</div>
+      <div class="pv-card"><h3>⚖️ กระทำความผิดฐาน</h3>${chargesHtml}</div>
+      <div class="pv-card"><h3>🧑‍💼 พนักงานสอบสวน</h3><p>${c.InvestigatorRank||''} ${c.InvestigatorName||''}${c.InvestigatorPhone?'<br><span class="pv-sub">โทร. '+c.InvestigatorPhone+'</span>':''}</p></div>
+      <div style="text-align:center;margin:20px 0;">
+        <button class="btn" onclick='printLabel(${JSON.stringify(c)},${JSON.stringify(suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์ป้ายของกลาง</button>
+        <button class="btn mint" onclick='printCaseDetail(${JSON.stringify(c)},${JSON.stringify(suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์รายละเอียดคดี</button>
+      </div>
+      <p style="text-align:center;"><a href="${location.origin+location.pathname}" style="color:var(--sub);font-size:12px;">↩ กลับสู่ระบบเต็มรูปแบบ (สำหรับเจ้าหน้าที่)</a></p>
+    </div>`;
+}
+
+/* ---------------- ENTRY POINT: ตรวจว่ามี ?id=... ใน URL หรือไม่ ---------------- */
+(function(){
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get('id');
+  if(id){
+    window.addEventListener('load', ()=> initPublicView(id));
+  }
+})();
+</script>
+</body>
+</html>
