@@ -60,6 +60,10 @@
   .mini-btn:hover{background:var(--pink);color:#fff;transform:translateY(-1px);}
   input.autofilled{border-color:var(--mint)!important;background-color:var(--mint-light);animation:fillPulse .5s ease;}
   @keyframes fillPulse{0%{transform:scale(1);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
+  .time-chips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;}
+  .chip-btn{border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:12px;padding:5px 12px;
+    border-radius:20px;cursor:pointer;transition:.15s;}
+  .chip-btn:hover{background:var(--pink);border-color:var(--pink);color:#fff;}
 
   /* --- Toast notification --- */
   #toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#2d3748;color:#fff;
@@ -214,7 +218,16 @@
     <div class="card">
       <h2>📝 บันทึกคดีใหม่</h2>
       <div class="row3">
-        <div><label>เลขคดี (คดีอาญาที่)</label><input id="fCaseId" placeholder="280/2569"></div>
+        <div>
+          <label>เลขคดีอาญาที่</label>
+          <div class="date-field-wrap">
+            <input id="fCaseNo" placeholder="145" oninput="updateCaseId()">
+            <span style="color:var(--sub);font-weight:700;">/</span>
+            <input id="fCaseYear" placeholder="2569" oninput="updateCaseId()" style="max-width:90px;">
+          </div>
+          <p style="font-size:11px;color:var(--sub);margin:4px 0 0;">รวมเป็น: <b id="fCaseIdPreview">-</b></p>
+          <input type="hidden" id="fCaseId">
+        </div>
         <div><label>ปจว.ข้อ</label><input id="fReportNo" placeholder="ข้อ 4"></div>
         <div>
           <label>วันที่เกิดเหตุ <button type="button" class="mini-btn" onclick="openTextDatePicker('fDate')" title="เลือกจากปฏิทิน">📅</button></label>
@@ -231,13 +244,26 @@
             <input type="text" id="fTime" placeholder="19.00 น.">
             <input type="time" id="fTime_picker" class="hidden-date-input" onchange="applyTextTimePicker('fTime')">
           </div>
+          <div class="time-chips">
+            <button type="button" class="chip-btn" onclick="setQuickTime('fTime','now')">🕐 ตอนนี้</button>
+            <button type="button" class="chip-btn" onclick="setQuickTime('fTime','08:00')">08:00</button>
+            <button type="button" class="chip-btn" onclick="setQuickTime('fTime','12:00')">12:00</button>
+            <button type="button" class="chip-btn" onclick="setQuickTime('fTime','18:00')">18:00</button>
+          </div>
         </div>
-        <div><label>พนักงานสอบสวน</label><input id="fInvName" placeholder="สุวิทย์ ซุยจรูญ"></div>
-        <div><label>ยศ/ตำแหน่ง</label><input id="fInvRank" placeholder="พ.ต.ท."></div>
+        <div>
+          <label>ชื่อพนักงานสอบสวน</label>
+          <input id="fInvFirstName" placeholder="สุวิทย์">
+        </div>
+        <div>
+          <label>นามสกุลพนักงานสอบสวน</label>
+          <input id="fInvLastName" placeholder="ซุยจรูญ">
+        </div>
       </div>
       <div class="row3">
+        <div><label>ยศ/ตำแหน่ง</label><input id="fInvRank" placeholder="พ.ต.ท."></div>
         <div><label>เบอร์โทรพนักงานสอบสวน</label><input id="fInvPhone" placeholder="081-234-5678"></div>
-        <div></div><div></div>
+        <div></div>
       </div>
 
       <label>👮 เลือก พงส.เจ้าของคดี (เลือกแล้วจะเติมชื่อ/ยศ/เบอร์โทรด้านบนให้อัตโนมัติ)</label>
@@ -245,9 +271,14 @@
       <div id="addInvestigatorPanel" class="sub-block mint hidden">
         <div class="row3">
           <div><label>ยศ</label><input id="newInvRank" placeholder="พ.ต.ท."></div>
-          <div><label>ชื่อ-นามสกุล</label><input id="newInvName" placeholder="ชื่อ นามสกุล"></div>
-          <div><label>ตำแหน่ง</label><input id="newInvPosition" placeholder="สว.(สอบสวน)สภ.ระเบาะไผ่"></div>
+          <div><label>ชื่อ</label><input id="newInvFirstName" placeholder="ชื่อ"></div>
+          <div><label>นามสกุล</label><input id="newInvLastName" placeholder="นามสกุล"></div>
         </div>
+        <div class="row">
+          <div><label>ตำแหน่ง</label><input id="newInvPosition" placeholder="สว.(สอบสวน)สภ.ระเบาะไผ่"></div>
+          <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678"></div>
+        </div>
+
         <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678"></div>
         <button type="button" class="btn small mint" onclick="saveNewInvestigator()">💾 เพิ่มลงรายชื่อ พงส.</button>
       </div>
@@ -297,8 +328,8 @@
    หลังติดตั้งเสร็จ ให้แก้ 2 บรรทัดด้านล่างนี้เป็นของจริง แล้วอัปโหลดไฟล์นี้ทับของเดิมบน GitHub อีกครั้ง
    (จำเป็น เพราะเวลาคนอื่นสแกน QR ด้วยมือถือเครื่องอื่น เครื่องนั้นจะไม่มีค่าที่ตั้งไว้ในแท็บ "ตั้งค่า" ของเรา
     การใส่ค่าเริ่มต้นไว้ในโค้ดตรงนี้ ทำให้ทุกเครื่องที่เปิดลิงก์ใช้งานได้ทันทีโดยไม่ต้องตั้งค่าเอง) */
-const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbxkepY8DrDCz_I61ZqNW2kFJ-2W27C-uJo-_asyB4xo9g6BWCXVYc0fHtgZyrdXc5KNKg/exec'; // เช่น 'https://script.google.com/macros/s/XXXXXXXX/exec'
-const DEFAULT_APP_URL = 'https://nontkenji27.github.io/Raboapai-Evidence-Update0.1/'; // เช่น 'https://nontkenji27.github.io/Raboapai-Evidence/'
+const DEFAULT_API_URL = ''; // เช่น 'https://script.google.com/macros/s/XXXXXXXX/exec'
+const DEFAULT_APP_URL = ''; // เช่น 'https://nontkenji27.github.io/Raboapai-Evidence/'
 
 const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
@@ -344,16 +375,71 @@ function applyTextTimePicker(fieldId){
   setTimeout(()=>field.classList.remove('autofilled'), 500);
 }
 
+/* ---------------- QUICK TIME/DATE CHIPS (ปุ่มลัดให้กรอกง่ายขึ้น) ---------------- */
+function setQuickTime(fieldId, preset){
+  const field = document.getElementById(fieldId);
+  if(!field) return;
+  let hh, mm;
+  if(preset === 'now'){
+    const now = new Date();
+    hh = String(now.getHours()).padStart(2,'0');
+    mm = String(now.getMinutes()).padStart(2,'0');
+  } else {
+    [hh, mm] = preset.split(':');
+  }
+  field.value = `${hh}.${mm} น.`;
+  field.classList.add('autofilled');
+  setTimeout(()=>field.classList.remove('autofilled'), 500);
+}
+function copyIncidentTime(targetFieldId){
+  const src = document.getElementById('fTime');
+  const target = document.getElementById(targetFieldId);
+  if(!src || !target) return;
+  if(!src.value.trim()){ showToast('ยังไม่ได้กรอกเวลาเกิดเหตุ', 'error'); return; }
+  target.value = src.value;
+  target.classList.add('autofilled');
+  setTimeout(()=>target.classList.remove('autofilled'), 500);
+}
+function copyIncidentDate(targetFieldId){
+  const src = document.getElementById('fDate');
+  const target = document.getElementById(targetFieldId);
+  if(!src || !target) return;
+  if(!src.value.trim()){ showToast('ยังไม่ได้กรอกวันที่เกิดเหตุ', 'error'); return; }
+  target.value = src.value;
+  target.classList.add('autofilled');
+  setTimeout(()=>target.classList.remove('autofilled'), 500);
+}
+
+/* ---------------- CASE ID (เลขคดี/ปี พ.ศ.) ---------------- */
+function updateCaseId(){
+  const no = val('fCaseNo'), year = val('fCaseYear');
+  const combined = (no && year) ? `${no}/${year}` : (no || '-');
+  document.getElementById('fCaseId').value = combined;
+  document.getElementById('fCaseIdPreview').textContent = combined;
+}
+(function(){
+  const initCaseYear = ()=>{
+    const yearField = document.getElementById('fCaseYear');
+    if(yearField && !yearField.value) yearField.value = (new Date().getFullYear()+543);
+    updateCaseId();
+  };
+  if(document.readyState === 'loading'){
+    window.addEventListener('DOMContentLoaded', initCaseYear);
+  } else {
+    initCaseYear();
+  }
+})();
+
 /* ---------------- INVESTIGATOR (พงส.) PICKER ---------------- */
 const DEFAULT_INVESTIGATORS = [
-  {rank:'พ.ต.ท.', name:'มานิต กิจหิรัญ', position:'รอง ผกก.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
-  {rank:'พ.ต.ท.', name:'สุวิทย์ ซุยจรูญ', position:'สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
-  {rank:'พ.ต.ท.', name:'เดช ภูมิสถาน', position:'สว.(หัวหน้าคดี)สภ.วังตะเคียน ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
-  {rank:'พ.ต.ต.', name:'สมบัติ วังวล', position:'สว.(สอบสวน)สภ.ประจันตคาม ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
-  {rank:'ร.ต.อ.', name:'กิตติพงษ์ สีหะบุตร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
-  {rank:'ร.ต.อ.', name:'อรรณพ แสงจันทร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
-  {rank:'ร.ต.ท.', name:'ศักดิ์สิทธิ์ ทองศรี', position:'รอง สว.(สอบสวน)สภ.กบินทร์บุรี ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
-  {rank:'ร.ต.ต.', name:'ชาตรี ผลภาษี', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''}
+  {rank:'พ.ต.ท.', firstName:'มานิต', lastName:'กิจหิรัญ', position:'รอง ผกก.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ท.', firstName:'สุวิทย์', lastName:'ซุยจรูญ', position:'สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ท.', firstName:'เดช', lastName:'ภูมิสถาน', position:'สว.(หัวหน้าคดี)สภ.วังตะเคียน ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'พ.ต.ต.', firstName:'สมบัติ', lastName:'วังวล', position:'สว.(สอบสวน)สภ.ประจันตคาม ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.อ.', firstName:'กิตติพงษ์', lastName:'สีหะบุตร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.อ.', firstName:'อรรณพ', lastName:'แสงจันทร์', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.ท.', firstName:'ศักดิ์สิทธิ์', lastName:'ทองศรี', position:'รอง สว.(สอบสวน)สภ.กบินทร์บุรี ช่วยราชการ สภ.ระเบาะไผ่', phone:''},
+  {rank:'ร.ต.ต.', firstName:'ชาตรี', lastName:'ผลภาษี', position:'รอง สว.(สอบสวน)สภ.ระเบาะไผ่', phone:''}
 ];
 function getInvestigatorsList(){
   let custom = [];
@@ -364,7 +450,7 @@ function renderInvestigatorOptions(){
   const sel = document.getElementById('fInvSelect');
   const list = getInvestigatorsList();
   sel.innerHTML = '<option value="">-- เลือกจากรายชื่อ พงส. --</option>' +
-    list.map((o,i)=>`<option value="${i}">${escapeHtml(o.rank)}${escapeHtml(o.name)} (${escapeHtml(o.position)})</option>`).join('') +
+    list.map((o,i)=>`<option value="${i}">${escapeHtml(o.rank)}${escapeHtml(o.firstName)} ${escapeHtml(o.lastName)} (${escapeHtml(o.position)})</option>`).join('') +
     '<option value="__custom__">✏️ พิมพ์เอง / เพิ่มรายชื่อใหม่</option>';
 }
 function applyInvestigatorSelect(){
@@ -375,28 +461,32 @@ function applyInvestigatorSelect(){
   if(sel.value === '') return;
   const o = getInvestigatorsList()[parseInt(sel.value)];
   if(!o) return;
-  const nameEl = document.getElementById('fInvName'), rankEl = document.getElementById('fInvRank'), phoneEl = document.getElementById('fInvPhone');
-  nameEl.value = o.name; rankEl.value = o.rank; phoneEl.value = o.phone || '';
-  [nameEl, rankEl, phoneEl].forEach(el=>{ el.classList.add('autofilled'); setTimeout(()=>el.classList.remove('autofilled'),500); });
+  const fnEl = document.getElementById('fInvFirstName'), lnEl = document.getElementById('fInvLastName'),
+        rankEl = document.getElementById('fInvRank'), phoneEl = document.getElementById('fInvPhone');
+  fnEl.value = o.firstName; lnEl.value = o.lastName; rankEl.value = o.rank; phoneEl.value = o.phone || '';
+  [fnEl, lnEl, rankEl, phoneEl].forEach(el=>{ el.classList.add('autofilled'); setTimeout(()=>el.classList.remove('autofilled'),500); });
 }
 function saveNewInvestigator(){
-  const rank = val('newInvRank'), name = val('newInvName'), position = val('newInvPosition'), phone = val('newInvPhone');
-  if(!name){ showToast('กรุณากรอกชื่อ-สกุล พงส.', 'error'); return; }
+  const rank = val('newInvRank'), firstName = val('newInvFirstName'), lastName = val('newInvLastName'),
+        position = val('newInvPosition'), phone = val('newInvPhone');
+  if(!firstName){ showToast('กรุณากรอกชื่อ พงส.', 'error'); return; }
   let custom = [];
   try{ custom = JSON.parse(localStorage.getItem('ems_investigators_custom') || '[]'); }catch(e){}
-  custom.push({rank, name, position, phone});
+  custom.push({rank, firstName, lastName, position, phone});
   localStorage.setItem('ems_investigators_custom', JSON.stringify(custom));
   renderInvestigatorOptions();
-  document.getElementById('fInvName').value = name;
+  document.getElementById('fInvFirstName').value = firstName;
+  document.getElementById('fInvLastName').value = lastName;
   document.getElementById('fInvRank').value = rank;
   document.getElementById('fInvPhone').value = phone;
   document.getElementById('newInvRank').value = '';
-  document.getElementById('newInvName').value = '';
+  document.getElementById('newInvFirstName').value = '';
+  document.getElementById('newInvLastName').value = '';
   document.getElementById('newInvPosition').value = '';
   document.getElementById('newInvPhone').value = '';
   document.getElementById('addInvestigatorPanel').classList.add('hidden');
   document.getElementById('fInvSelect').value = '';
-  showToast('✅ เพิ่มรายชื่อ ' + rank + name + ' ไว้ในระบบแล้ว', 'success');
+  showToast('✅ เพิ่มรายชื่อ ' + rank + firstName + ' ' + lastName + ' ไว้ในระบบแล้ว', 'success');
 }
 renderInvestigatorOptions();
 
@@ -568,14 +658,29 @@ function addSuspect(){
   div.id = 'block-'+id;
   div.innerHTML = `
     <button class="remove-x" onclick="document.getElementById('block-${id}').remove()">✕</button>
-    <div class="row">
-      <div><label>ชื่อ-นามสกุล</label><input id="${id}_name" placeholder="นายฤทธิเดช บัวบาล"></div>
+    <div class="row3">
+      <div><label>คำนำหน้า</label>
+        <select id="${id}_title">
+          <option>นาย</option><option>นาง</option><option>นางสาว</option><option>เด็กชาย</option><option>เด็กหญิง</option><option value="">- ไม่ระบุ -</option>
+        </select>
+      </div>
+      <div><label>ชื่อ</label><input id="${id}_fname" placeholder="ฤทธิเดช"></div>
+      <div><label>นามสกุล</label><input id="${id}_lname" placeholder="บัวบาล"></div>
+    </div>
+    <div class="row3">
       <div><label>อายุ</label><input id="${id}_age" placeholder="XX ปี"></div>
+      <div><label>สัญชาติ</label><input id="${id}_nat" value="ไทย" oninput="toggleSuspectIdType('${id}')"></div>
+      <div>
+        <label>ประเภทเอกสาร</label>
+        <select id="${id}_idtype" onchange="toggleSuspectIdType('${id}', true)">
+          <option value="thaiid">บัตรประชาชนไทย</option>
+          <option value="passport">หนังสือเดินทาง (Passport)</option>
+          <option value="alienid">เลขประจำตัวผู้ไม่มีสัญชาติไทย</option>
+        </select>
+      </div>
     </div>
-    <div class="row">
-      <div><label>สัญชาติ</label><input id="${id}_nat" placeholder="ไทย"></div>
-      <div><label>เลขบัตรประชาชน</label><input id="${id}_idcard" placeholder="3-25XX-XXXX-72-4"></div>
-    </div>
+    <label id="${id}_idnum_label">เลขบัตรประชาชน</label>
+    <input id="${id}_idnum" placeholder="3-25XX-XXXX-72-4">
     <label>ที่อยู่ (บ้านเลขที่/หมู่/ถนน)</label>
     <input id="${id}_addr1" placeholder="เช่น 99 หมู่ 3">
     <div class="row3">
@@ -597,6 +702,31 @@ function addSuspect(){
     </div>`;
   document.getElementById('suspectList').appendChild(div);
   setupAddressAutocomplete(id);
+}
+
+function toggleSuspectIdType(id, manualChange){
+  const nat = document.getElementById(id+'_nat').value.trim();
+  const idtypeSel = document.getElementById(id+'_idtype');
+  // ถ้าผู้ใช้พิมพ์สัญชาติเองว่าไม่ใช่ไทย และยังไม่ได้เปลี่ยนประเภทเอกสารเอง ให้เดาประเภทเอกสารให้อัตโนมัติ
+  if(!manualChange){
+    if(nat && nat !== 'ไทย' && idtypeSel.value === 'thaiid'){
+      idtypeSel.value = 'passport';
+    } else if((nat === 'ไทย' || nat === '') && idtypeSel.value !== 'thaiid'){
+      idtypeSel.value = 'thaiid';
+    }
+  }
+  const label = document.getElementById(id+'_idnum_label');
+  const input = document.getElementById(id+'_idnum');
+  if(idtypeSel.value === 'passport'){
+    label.textContent = 'เลขหนังสือเดินทาง (Passport No.)';
+    input.placeholder = 'เช่น AA1234567';
+  } else if(idtypeSel.value === 'alienid'){
+    label.textContent = 'เลขประจำตัวผู้ไม่มีสัญชาติไทย';
+    input.placeholder = 'เลข 13 หลัก ขึ้นต้นด้วย 6 หรือ 7';
+  } else {
+    label.textContent = 'เลขบัตรประชาชน';
+    input.placeholder = '3-25XX-XXXX-72-4';
+  }
 }
 
 function addEvidence(){
@@ -634,12 +764,19 @@ function addEvidence(){
           <input type="text" id="${id}_seizedate" placeholder="20 กรกฎาคม 2569">
           <input type="date" id="${id}_seizedate_picker" class="hidden-date-input" onchange="applyTextDatePicker('${id}_seizedate')">
         </div>
+        <div class="time-chips">
+          <button type="button" class="chip-btn" onclick="copyIncidentDate('${id}_seizedate')">📋 วันเดียวกับเกิดเหตุ</button>
+        </div>
       </div>
       <div>
         <label>เวลาตรวจยึด <button type="button" class="mini-btn" onclick="openTextTimePicker('${id}_seizetime')" title="เลือกเวลา">⏰</button></label>
         <div class="date-field-wrap">
           <input type="text" id="${id}_seizetime" placeholder="14.30 น.">
           <input type="time" id="${id}_seizetime_picker" class="hidden-date-input" onchange="applyTextTimePicker('${id}_seizetime')">
+        </div>
+        <div class="time-chips">
+          <button type="button" class="chip-btn" onclick="setQuickTime('${id}_seizetime','now')">🕐 ตอนนี้</button>
+          <button type="button" class="chip-btn" onclick="copyIncidentTime('${id}_seizetime')">📋 เวลาเดียวกับเกิดเหตุ</button>
         </div>
       </div>
       <div><label>บ้านเลขที่/หมู่/ถนน</label><input id="${id}_place" placeholder="เช่น 123 หมู่ 4"></div>
@@ -686,17 +823,22 @@ async function submitCase(){
   const api = getApiUrl();
   const msgDiv = document.getElementById('newCaseMsg');
   if(!api){ msgDiv.innerHTML = '<div class="msg err">กรุณาตั้งค่า Apps Script Web App URL ในแท็บ "ตั้งค่า" ก่อน</div>'; return; }
+  updateCaseId();
   const caseId = document.getElementById('fCaseId').value.trim();
-  if(!caseId){ msgDiv.innerHTML = '<div class="msg err">กรุณากรอกเลขคดี</div>'; return; }
+  if(!val('fCaseNo')){ msgDiv.innerHTML = '<div class="msg err">กรุณากรอกเลขคดีอาญาที่</div>'; return; }
 
   msgDiv.innerHTML = '<div class="msg ok">⏳ กำลังบันทึกข้อมูล กรุณารอสักครู่...</div>';
 
+  const IDTYPE_LABELS = {thaiid:'บัตรประชาชนไทย', passport:'หนังสือเดินทาง (Passport)', alienid:'เลขประจำตัวผู้ไม่มีสัญชาติไทย'};
   const suspects = [];
   document.querySelectorAll('#suspectList .sub-block').forEach(block=>{
     const id = block.id.replace('block-','');
+    const title = val(id+'_title'), fname = val(id+'_fname'), lname = val(id+'_lname');
+    const idType = document.getElementById(id+'_idtype').value;
     suspects.push({
-      name: val(id+'_name'), age: val(id+'_age'),
-      nationality: val(id+'_nat'), idCard: val(id+'_idcard'),
+      title, firstName: fname, lastName: lname, name: (title+fname+' '+lname).trim(),
+      age: val(id+'_age'), nationality: val(id+'_nat'),
+      idType, idTypeLabel: IDTYPE_LABELS[idType]||'', idCard: val(id+'_idnum'),
       address: val(id+'_addr1'), tambon: val(id+'_tambon'),
       amphoe: val(id+'_amphoe'), province: val(id+'_province')
     });
@@ -717,9 +859,13 @@ async function submitCase(){
     });
   }
 
+  const invFirst = val('fInvFirstName'), invLast = val('fInvLastName');
   const payload = {
-    caseId, policeReportNo: val('fReportNo'), incidentDate: val('fDate'), incidentTime: val('fTime'),
-    investigatorName: val('fInvName'), investigatorRank: val('fInvRank'), investigatorPhone: val('fInvPhone'),
+    caseId, caseNo: val('fCaseNo'), caseYear: val('fCaseYear'),
+    policeReportNo: val('fReportNo'), incidentDate: val('fDate'), incidentTime: val('fTime'),
+    investigatorFirstName: invFirst, investigatorLastName: invLast,
+    investigatorName: (invFirst+' '+invLast).trim(),
+    investigatorRank: val('fInvRank'), investigatorPhone: val('fInvPhone'),
     charges: val('fCharges'), suspects, evidenceItems
   };
 
@@ -891,7 +1037,8 @@ function printCaseDetail(c, suspects, ev){
   const chargesHtml = chargesLines.map((line,i)=>`<p class="cr-indent">${line}</p>`).join('');
   const suspectsHtml = suspects.map((s,i)=>{
     const addrParts = [s.Address, s.Tambon?('ต.'+s.Tambon):'', s.Amphoe?('อ.'+s.Amphoe):'', s.Province?('จ.'+s.Province):''].filter(Boolean).join(' ');
-    return `<p class="cr-indent">${i+1}.<u>${s.Name||''}</u> อายุ ${s.Age||'XX'} ปี สัญชาติ${s.Nationality||'ไทย'} หมายเลขบัตรประชาชน ${s.IDCard||''}${addrParts?' อยู่บ้านเลขที่ '+addrParts:''}</p>`;
+    const idLabel = s.IDType === 'passport' ? 'เลขหนังสือเดินทาง' : (s.IDType === 'alienid' ? 'เลขประจำตัวผู้ไม่มีสัญชาติไทย' : 'หมายเลขบัตรประชาชน');
+    return `<p class="cr-indent">${i+1}.<u>${s.Name||''}</u> อายุ ${s.Age||'XX'} ปี สัญชาติ${s.Nationality||'ไทย'} ${idLabel} ${s.IDCard||''}${addrParts?' อยู่บ้านเลขที่ '+addrParts:''}</p>`;
   }).join('');
   const seizePlace = formatSeizePlace(ev);
   const html = `<div class="case-report">
@@ -959,7 +1106,8 @@ function renderPublicView(data, evidenceId){
   const chargesHtml = (c.Charges||'').split('\n').filter(x=>x.trim()).map(l=>`<p>${l}</p>`).join('') || '<p>-</p>';
   const suspectsHtml = suspects.map(s=>{
     const addrParts = [s.Address, s.Tambon?('ต.'+s.Tambon):'', s.Amphoe?('อ.'+s.Amphoe):'', s.Province?('จ.'+s.Province):''].filter(Boolean).join(' ');
-    return `<p><b>${s.Name||''}</b> อายุ ${s.Age||'-'} ปี สัญชาติ${s.Nationality||'ไทย'} เลขบัตร ปชช. ${s.IDCard||'-'}${addrParts?'<br><span class="pv-sub">อยู่ '+addrParts+'</span>':''}</p>`;
+    const idLabel = s.IDType === 'passport' ? 'เลข Passport' : (s.IDType === 'alienid' ? 'เลขประจำตัวผู้ไม่มีสัญชาติไทย' : 'เลขบัตร ปชช.');
+    return `<p><b>${s.Name||''}</b> อายุ ${s.Age||'-'} ปี สัญชาติ${s.Nationality||'ไทย'} ${idLabel} ${s.IDCard||'-'}${addrParts?'<br><span class="pv-sub">อยู่ '+addrParts+'</span>':''}</p>`;
   }).join('') || '<p>-</p>';
 
   document.getElementById('reportView').innerHTML = `
