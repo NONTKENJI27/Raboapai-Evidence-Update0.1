@@ -120,6 +120,7 @@
   .pv-photos{display:flex;gap:8px;margin-bottom:14px;}
   .pv-photos img{width:50%;height:180px;object-fit:cover;border-radius:12px;box-shadow:var(--shadow);border:1px solid var(--border);}
   @media(max-width:420px){.pv-photos{flex-direction:column;} .pv-photos img{width:100%;height:200px;}}
+  .pv-viewonly{text-align:center;font-size:12px;color:var(--sub);margin:20px 0 8px;line-height:1.6;padding:0 10px;}
   /* --- Report style 1: ป้ายของกลาง --- */
   .label-report{width:560px;margin:0 auto;background:#000;color:#fff;padding:20px;border-radius:14px;font-family:'Sarabun',sans-serif;}
   .label-report .lr-head{display:flex;align-items:center;gap:14px;border:2px solid #fff;border-radius:30px;padding:10px 16px;margin-bottom:16px;}
@@ -262,7 +263,7 @@
       </div>
       <div class="row3">
         <div><label>ยศ/ตำแหน่ง</label><input id="fInvRank" placeholder="พ.ต.ท."></div>
-        <div><label>เบอร์โทรพนักงานสอบสวน</label><input id="fInvPhone" placeholder="081-234-5678"></div>
+        <div><label>เบอร์โทรพนักงานสอบสวน</label><input id="fInvPhone" placeholder="081-234-5678" oninput="formatPhoneInput(this)"></div>
         <div></div>
       </div>
 
@@ -276,10 +277,8 @@
         </div>
         <div class="row">
           <div><label>ตำแหน่ง</label><input id="newInvPosition" placeholder="สว.(สอบสวน)สภ.ระเบาะไผ่"></div>
-          <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678"></div>
+          <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678" oninput="formatPhoneInput(this)"></div>
         </div>
-
-        <div><label>เบอร์โทร</label><input id="newInvPhone" placeholder="081-234-5678"></div>
         <button type="button" class="btn small mint" onclick="saveNewInvestigator()">💾 เพิ่มลงรายชื่อ พงส.</button>
       </div>
       <label>ข้อหา / กระทำความผิดฐาน (พิมพ์แต่ละข้อหาขึ้นบรรทัดใหม่)</label>
@@ -680,7 +679,7 @@ function addSuspect(){
       </div>
     </div>
     <label id="${id}_idnum_label">เลขบัตรประชาชน</label>
-    <input id="${id}_idnum" placeholder="3-25XX-XXXX-72-4">
+    <input id="${id}_idnum" placeholder="1-2345-67890-12-3" oninput="onSuspectIdInput('${id}')">
     <label>ที่อยู่ (บ้านเลขที่/หมู่/ถนน)</label>
     <input id="${id}_addr1" placeholder="เช่น 99 หมู่ 3">
     <div class="row3">
@@ -722,11 +721,39 @@ function toggleSuspectIdType(id, manualChange){
     input.placeholder = 'เช่น AA1234567';
   } else if(idtypeSel.value === 'alienid'){
     label.textContent = 'เลขประจำตัวผู้ไม่มีสัญชาติไทย';
-    input.placeholder = 'เลข 13 หลัก ขึ้นต้นด้วย 6 หรือ 7';
+    input.placeholder = '6-XXXX-XXXXX-XX-X';
+    formatThaiIdInput(input);
   } else {
     label.textContent = 'เลขบัตรประชาชน';
-    input.placeholder = '3-25XX-XXXX-72-4';
+    input.placeholder = '1-2345-67890-12-3';
+    formatThaiIdInput(input);
   }
+}
+
+/* ---------------- AUTO-FORMAT: เลขบัตร (มีขีดอัตโนมัติ) และเบอร์โทร ---------------- */
+function formatThaiIdInput(el){
+  const digits = el.value.replace(/\D/g,'').slice(0,13);
+  const parts = [];
+  if(digits.length>0) parts.push(digits.slice(0,1));
+  if(digits.length>1) parts.push(digits.slice(1,5));
+  if(digits.length>5) parts.push(digits.slice(5,10));
+  if(digits.length>10) parts.push(digits.slice(10,12));
+  if(digits.length>12) parts.push(digits.slice(12,13));
+  el.value = parts.join('-');
+}
+function formatPhoneInput(el){
+  const digits = el.value.replace(/\D/g,'').slice(0,10);
+  const parts = [];
+  if(digits.length>0) parts.push(digits.slice(0,3));
+  if(digits.length>3) parts.push(digits.slice(3,6));
+  if(digits.length>6) parts.push(digits.slice(6,10));
+  el.value = parts.join('-');
+}
+function onSuspectIdInput(id){
+  const idtypeSel = document.getElementById(id+'_idtype');
+  const input = document.getElementById(id+'_idnum');
+  if(idtypeSel.value === 'passport') return; // Passport เป็นตัวอักษร+ตัวเลข ไม่บังคับรูปแบบ
+  formatThaiIdInput(input);
 }
 
 function addEvidence(){
@@ -1136,11 +1163,7 @@ function renderPublicView(data, evidenceId){
       <div class="pv-card"><h3>👤 ผู้ต้องหา</h3>${suspectsHtml}</div>
       <div class="pv-card"><h3>⚖️ กระทำความผิดฐาน</h3>${chargesHtml}</div>
       <div class="pv-card"><h3>🧑‍💼 พนักงานสอบสวน</h3><p>${c.InvestigatorRank||''} ${c.InvestigatorName||''}${c.InvestigatorPhone?'<br><span class="pv-sub">โทร. '+c.InvestigatorPhone+'</span>':''}</p></div>
-      <div style="text-align:center;margin:20px 0;">
-        <button class="btn" onclick='printLabel(${JSON.stringify(c)},${JSON.stringify(suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์ป้ายของกลาง</button>
-        <button class="btn mint" onclick='printCaseDetail(${JSON.stringify(c)},${JSON.stringify(suspects)},${JSON.stringify(ev)})'>🖨️ พิมพ์รายละเอียดคดี</button>
-      </div>
-      <p style="text-align:center;"><a href="${location.origin+location.pathname}" style="color:var(--sub);font-size:12px;">↩ กลับสู่ระบบเต็มรูปแบบ (สำหรับเจ้าหน้าที่)</a></p>
+      <p class="pv-viewonly">🔒 หน้านี้แสดงข้อมูลเพื่อการตรวจสอบเท่านั้น สำหรับการแก้ไขหรือพิมพ์เอกสาร กรุณาติดต่อเจ้าหน้าที่ผู้ดูแลระบบ</p>
     </div>`;
 }
 
